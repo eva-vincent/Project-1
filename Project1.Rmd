@@ -1,0 +1,113 @@
+---
+title: "Popularity of Super Bowl Ads since 2000"
+author: "Eva Vincent - SDS 313 UT Austin"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+```{r global options, echo=FALSE}
+knitr::opts_chunk$set(warning=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+```
+
+
+# 1. Introduction
+The data is collected from 233 advertisements across 10 brands that aired the most in all 21 Super Bowls from 2000 to 2021. The data collectors watched the ads and evaluated them using 7 criteria, marking 'yes' or 'no' for each. This report will measure the popularity of Super Bowl ads by using the number of views it received as the outcome variable. To do this, I will investigate the inclusion of celebrities,  the inclusion of animals, and interactions including likes, dislikes, and comments as predictor variables. For descriptions of all the variables included in the dataset, visit this article by [FiveThirtyEight](https://projects.fivethirtyeight.com/super-bowl-ads/).
+
+![Scherer, Emily. 4 Feb. 2021. FiveThirtyEight, https://projects.fivethirtyeight.com/super-bowl-ads/.](https://projects.fivethirtyeight.com/super-bowl-ads/images/SUPER-BOWL-ADS-Topper.png?v=7e5791e9)
+
+
+# 2. Outcome Variable
+```{r echo=FALSE}
+ads <- read.csv('Project1_SuperBowlAds.csv')
+library(ggplot2)
+ads$view_count_perk <- ads$view_count/1000
+ads_ggplot <- ggplot(ads)
+ads_ggplot + geom_histogram(aes(x=view_count_perk),binwidth=20000, col='black',fill='dark green') + labs(title='View Count of Super Bowl Ads',x='Number of Views (in thousands)', y= 'Frequency') + scale_fill_brewer(type='qual',palette=2) + theme_classic()
+```
+
+Above is the graph of view counts with outliers included.
+
+
+```{r echo=FALSE}
+ads_ggplot + geom_histogram(aes(x=view_count_perk),binwidth=1000, col='black',fill='dark green') + labs(title='View Count of Super Bowl Ads',x='Number of Views (in thousands)', y= 'Frequency') + scale_fill_brewer(type='qual',palette=2) + theme_classic() + xlim(c(0,10000)) +ylim(c(0,20))
+```
+
+The above graph shows the distribution of the view counts of ads with under 10,000,000 to account for outliers, and the graph is positively skewed. The median number of view counts in thousands is `r round(median(ads$view_count_perk, na.rm=TRUE),2)` and the interquartile range is `r round(IQR(ads$view_count_perk, na.rm=TRUE),2)`.
+
+# 3. Bivariate Analyses
+
+## Interactions and View Count
+```{r echo=FALSE}
+ads$interactions<- ads$like_count + ads$view_count + ads$comment_count
+ads_ggplot <- ggplot(ads)
+ads_ggplot + geom_point(aes(x=interactions/1000,y=view_count_perk)) + labs(title='Interactions and View Count', x='Interaction Count (in thousands)',y='View Count (in thousands)') + theme_classic() + xlim(c(0,10000)) + ylim(c(0,10000))
+```
+
+The above graph includes all interaction counts and view counts under 10 million. The correlation coefficient is `r round(cor(ads$interactions/1000,ads$view_count_perk, use = "complete.obs"),2)`. The graph and correlation coefficient suggest an <span style="color: red;">extremely strong positive</span> correlation between view counts and the number of likes, dislikes, and comments the ad received.
+
+
+## View Count and Celebrities
+```{r echo=FALSE}
+ggplot(ads, aes(x = celebrity, y = view_count_perk, fill = celebrity)) + geom_boxplot() + coord_flip() + labs(title='View Count and Celebrities',x='Presence of Celebrity', y= 'View Count (in thousands)') +theme_classic() +ylim(c(0,1000))
+```
+
+The graph above shows the distribution of view counts in thousands based on if there was a celebrity present in the ad or not. Only view counts under 1 million were included to account for extreme outliers.
+
+```{r echo=FALSE}
+median_celeb <- aggregate(view_count_perk~celebrity, data=ads, median)
+IQR_celeb <- aggregate(view_count_perk~celebrity, data=ads, IQR)
+mytable <- data.frame(median_celeb$celebrity,median_celeb$view_count, IQR_celeb$view_count)
+
+colnames(mytable) <- c('Celebrity?','Median','IQR')
+mytable$Median <- round(mytable$Median,2)
+mytable$IQR <- round(mytable$IQR,2)
+
+library(kableExtra)
+kable_classic(kbl(mytable,caption = "View Count Average (in thousands) and Presence of Celebrity"),full_width = FALSE)
+```
+The table above shows the median view counts in thousands and interquartile ranges for ads with a celebrity and without a celebrity.
+
+The median view count for ads without a celebrity feature is 9,360 views higher than the median view count for the ads with a celebrity. This indicates that the inclusion of a celebrity feature <span style="color: red;">did not have a positive impact</span> on the popularity of or user engagement with the ads. However, this number is relatively small in comparison to the large view count numbers, so this median difference could be considered insignificant.
+
+
+
+## View Count and Animals
+```{r echo=FALSE}
+ggplot(ads, aes(x = animals, y = view_count_perk, fill = animals)) + geom_boxplot() + coord_flip() + labs(title='View Count and Animals',x='Presence of Animals', y= 'View Count (in thousands') + theme_classic()+ ylim(c(0,1000))
+```
+
+The graph above shows the distribution of view counts in thousands based on if there was an animal present in the ad or not. Only view counts under 1 million were included to account for outliers.
+
+```{r echo=FALSE}
+median_animal <- aggregate(view_count_perk~animals, data=ads, median)
+IQR_animal <- aggregate(view_count_perk~animals, data=ads, IQR)
+animaltable <- data.frame(median_animal$animals,median_animal$view_count, IQR_animal$view_count)
+
+
+colnames(animaltable) <- c('Animal?','Median','IQR')
+animaltable$Median <- round(animaltable$Median,2)
+animaltable$IQR <- round(animaltable$IQR,2)
+
+library(kableExtra)
+kable_classic(kbl(animaltable,caption = "View Count Average and Presence of Animal"),full_width = FALSE)
+
+```
+The table above shows the median view counts in thousands and interquartile ranges for ads with an animal and without an animal.
+
+The median view count for ads without an animal is 1,470 views higher than the median view count for the ads with an animal. This indicates that the inclusion of a celebrity feature <span style="color: red;">did not have a positive impact</span> on the popularity of or user engagement with the ads. However, this number is relatively small in comparison to the large view count numbers, so this median difference could be considered insignificant.
+
+
+# 4. Choice Elements
+I used in-line code to describe the median and interquartile range of my outcome variable as well as the correlation in my bivariate analysis of view count and interactions. I included two hyperlinks in my introduction and conclusion to explain the dataset and variables. I changed the default color of some text in my bivariate analyses to highlight the important conclusions of my analyses. I included a floating table of contents to allow easy navigation across sections. I created the new predictor variable "interactions" as my numerical variable for one of my bivariate analyses.
+
+
+# 5. Conclusion
+For this report, I used the number of views the advertisement received as the outcome variable. When comparing this variable against total interactions, including likes, dislikes, and comments, the results showed a perfect positive linear relationship between the two variables. Interactions are directly correlated to the amount of views an ad receives. I then compared view count to the presence of celebrities and animals in the ads. Both analyses revealed that celebrities and animals had no significant positive impact on the number of views. However, the difference in median views was relatively small, so it cannot be fully assumed that celebrities and animals had a more negative than positive impact on views. It may be relevant to research which combinations of variables have been the most effective in increasing ad popularity. Using this research could be helpful in the conception and production of future Super Bowl ads to increase engagement with and overall perception of brands. If you would like to watch some of the ads that this report is based on, visit the [Super Bowl Ads Archive](https://www.superbowl-ads.com/) to watch any Super Bowl ad from 1998 to 2024.
+
+## References
+Best, Ryan, and Emily Scherer. “According to Super Bowl ADS, Americans Love America, Animals and Sex.” FiveThirtyEight, ABC News Internet Ventures, 4 Feb. 2021, projects.fivethirtyeight.com/super-bowl-ads/. 
+
+“Welcome to the Super Bowl Advertising Archive.” Superbowl-Ads.Com, 13 Feb. 2024, www.superbowl-ads.com/. 
+
+
