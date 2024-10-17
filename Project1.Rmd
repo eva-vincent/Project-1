@@ -8,6 +8,8 @@ output:
 ---
 ```{r global options, echo=FALSE}
 knitr::opts_chunk$set(warning=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+library(ggplot2)
+library(kableExtra)
 ```
 
 
@@ -19,9 +21,11 @@ The data is collected from 233 advertisements across 10 brands that aired the mo
 
 # 2. Outcome Variable
 ```{r echo=FALSE}
+# Scaling the variable
 ads <- read.csv('Project1_SuperBowlAds.csv')
-library(ggplot2)
 ads$view_count_perk <- ads$view_count/1000
+
+# Making the graph
 ads_ggplot <- ggplot(ads)
 ads_ggplot + geom_histogram(aes(x=view_count_perk),binwidth=20000, col='black',fill='dark green') + labs(title='View Count of Super Bowl Ads',x='Number of Views (in thousands)', y= 'Frequency') + scale_fill_brewer(type='qual',palette=2) + theme_classic()
 ```
@@ -39,7 +43,10 @@ The above graph shows the distribution of the view counts of ads with under 10,0
 
 ## Interactions and View Count
 ```{r echo=FALSE}
+# Creating interaction variable
 ads$interactions<- ads$like_count + ads$view_count + ads$comment_count
+
+# Making graph
 ads_ggplot <- ggplot(ads)
 ads_ggplot + geom_point(aes(x=interactions/1000,y=view_count_perk)) + labs(title='Interactions and View Count', x='Interaction Count (in thousands)',y='View Count (in thousands)') + theme_classic() + xlim(c(0,10000)) + ylim(c(0,10000))
 ```
@@ -55,15 +62,17 @@ ggplot(ads, aes(x = celebrity, y = view_count_perk, fill = celebrity)) + geom_bo
 The graph above shows the distribution of view counts in thousands based on if there was a celebrity present in the ad or not. Only view counts under 1 million were included to account for extreme outliers.
 
 ```{r echo=FALSE}
+# Subsetting
 median_celeb <- aggregate(view_count_perk~celebrity, data=ads, median)
 IQR_celeb <- aggregate(view_count_perk~celebrity, data=ads, IQR)
 mytable <- data.frame(median_celeb$celebrity,median_celeb$view_count, IQR_celeb$view_count)
 
+# Assigning coumn names and rounding values
 colnames(mytable) <- c('Celebrity?','Median','IQR')
 mytable$Median <- round(mytable$Median,2)
 mytable$IQR <- round(mytable$IQR,2)
 
-library(kableExtra)
+# Creating table
 kable_classic(kbl(mytable,caption = "View Count Average (in thousands) and Presence of Celebrity"),full_width = FALSE)
 ```
 The table above shows the median view counts in thousands and interquartile ranges for ads with a celebrity and without a celebrity.
@@ -80,16 +89,17 @@ ggplot(ads, aes(x = animals, y = view_count_perk, fill = animals)) + geom_boxplo
 The graph above shows the distribution of view counts in thousands based on if there was an animal present in the ad or not. Only view counts under 1 million were included to account for outliers.
 
 ```{r echo=FALSE}
+# Subsetting
 median_animal <- aggregate(view_count_perk~animals, data=ads, median)
 IQR_animal <- aggregate(view_count_perk~animals, data=ads, IQR)
 animaltable <- data.frame(median_animal$animals,median_animal$view_count, IQR_animal$view_count)
 
-
+# Assigning coumn names and rounding values
 colnames(animaltable) <- c('Animal?','Median','IQR')
 animaltable$Median <- round(animaltable$Median,2)
 animaltable$IQR <- round(animaltable$IQR,2)
 
-library(kableExtra)
+# Making the table
 kable_classic(kbl(animaltable,caption = "View Count Average and Presence of Animal"),full_width = FALSE)
 
 ```
